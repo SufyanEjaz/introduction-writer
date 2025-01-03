@@ -1,101 +1,244 @@
-import Image from "next/image";
+'use client';
+
+import { useState, useRef } from 'react';
+import ArrowBackIos from '@mui/icons-material/ArrowBackIos';
+import ArrowForwardIos from '@mui/icons-material/ArrowForwardIos';
+import FileUpload from './components/FileUpload';
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [selectedStyle, setSelectedStyle] = useState('AOM writing style');
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
+  // File states for each section
+  const [theoreticalFrameworkFiles, setTheoreticalFrameworkFiles] = useState<File[]>([]);
+  const [relevantTheoryFiles, setRelevantTheoryFiles] = useState<File[]>([]);
+  const [supportingLiteratureFiles, setSupportingLiteratureFiles] = useState<File[]>([]);
+
+  const [formData, setFormData] = useState({
+    mainQuery: '',
+    background: '',
+    significance: '',
+    proposedHypothesis: '',
+    underpinningTheories: '',
+    researchMethodology: '',
+    journalScope: '',
+    context: '',
+    instructions: '',
+    boundaryConditions: '',
+    mediators: '',
+    mustIncludeArgument: '',
+  });
+
+  const [errors, setErrors] = useState<{ [key: string]: boolean }>({});
+
+  const formRefs = useRef<{ [key: string]: HTMLTextAreaElement | null }>({});
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    setErrors((prev) => ({ ...prev, [name]: false }));
+  };
+
+  const validateForm = () => {
+    const newErrors: { [key: string]: boolean } = {};
+    const requiredFields = ['mainQuery', 'background', 'significance'];
+
+    requiredFields.forEach((field) => {
+      if (!formData[field]?.trim()) {
+        newErrors[field] = true;
+      }
+    });
+
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) {
+      const firstErrorKey = requiredFields.find((field) => newErrors[field]);
+      if (firstErrorKey) {
+        formRefs.current[firstErrorKey]?.focus();
+      }
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (validateForm()) {
+      alert('Form submitted successfully!');
+      console.log('Form Data:', formData);
+    } else {
+      alert('Please fill in all required fields.');
+    }
+  };
+
+  return (
+    <div className="flex h-screen">
+      {/* Sidebar */}
+      <aside
+        className={`transition-all duration-300 bg-gray-50 border-r ${
+          sidebarOpen ? 'w-1/3' : 'w-0'
+        }`}
+        style={{ position: 'sticky', top: 0, height: '100vh' }}
+      >
+        {sidebarOpen && (
+          <div className="flex flex-col h-full">
+            {/* Scrollable Content */}
+            <div className="p-8 flex-1 overflow-y-auto">
+              {/* Upload Existing Vector Database */}
+              <div className="mb-8">
+                <h2 className="text-lg font-semibold mb-3">Upload Existing Vector Database</h2>
+                <button className="w-full border border-gray-500 text-gray-500 py-2 px-4 rounded-lg hover:bg-red-100">
+                  Load Vector Database
+                </button>
+              </div>
+
+              {/* Upload Theoretical Framework */}
+              <div className="mb-8">
+                <h2 className="text-lg font-semibold mb-3">Upload Theoretical Framework</h2>
+                <FileUpload
+                  files={theoreticalFrameworkFiles}
+                  setFiles={setTheoreticalFrameworkFiles}
+                  onDrop={(files) => console.log('Uploaded Files:', files)}
+                  accept={{
+                    'image/*': ['.png', '.jpg', '.jpeg'], // Accept image files
+                  }}
+                />
+              </div>
+
+              {/* Upload Relevant Theory Files */}
+              <div className="mb-8">
+                <h2 className="text-lg font-semibold mb-3">Upload Relevant Theory Files</h2>
+                <FileUpload
+                  files={relevantTheoryFiles}
+                  setFiles={setRelevantTheoryFiles}
+                  onDrop={(files) => console.log('Uploaded Files:', files)}
+                  accept={{
+                    'application/pdf': ['.pdf'], // Accept PDF files
+                  }}
+                />
+              </div>
+
+              {/* Upload Supporting Literature Files */}
+              <div className="mb-8">
+                <h2 className="text-lg font-semibold mb-3">Upload Supporting Literature Files</h2>
+                <FileUpload
+                  files={supportingLiteratureFiles}
+                  setFiles={setSupportingLiteratureFiles}
+                  onDrop={(files) => console.log('Uploaded Files:', files)}
+                  accept={{
+                    'application/pdf': ['.pdf'], // Accept PDF files
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Footer (Fixed at the Bottom) */}
+            <div className="p-4 border-t bg-gray-100">
+              <h2 className="text-lg font-semibold mb-3">Generate and Save Embeddings</h2>
+              <button className="w-full border border-red-500 text-red-500 py-2 px-4 rounded-lg hover:bg-red-100">
+                Get Embeddings
+              </button>
+            </div>
+          </div>
+        )}
+      </aside>
+
+      {/* Toggle Arrow */}
+      <div
+        className={`absolute z-10 top-4 left-4 bg-white border border-gray-300 rounded-full p-2 shadow-lg hover:shadow-xl hover:bg-gray-100 transition-all duration-300`}
+        style={{
+          position: 'fixed',
+          top: '16px',
+          left: sidebarOpen ? '16px' : '', // Adjust positioning dynamically when the sidebar is open or closed
+          zIndex: 10,
+        }}
+      >
+        <button onClick={() => setSidebarOpen(!sidebarOpen)}>
+          {sidebarOpen ? <ArrowBackIos fontSize="medium" /> : <ArrowForwardIos fontSize="medium" />}
+        </button>
+      </div>
+
+      {/* Main Content Area */}
+      <main className="flex-1 overflow-y-auto p-8">
+        <h1 className="text-3xl font-bold mb-8">Introduction Writer</h1>
+
+        {/* Academic Writing Style */}
+        <section className="mb-8">
+          <h2 className="text-lg font-semibold mb-4">Select an Academic Writing Style</h2>
+          <div className="space-y-4">
+            {['AOM writing style', 'Science Direct writing style', 'Journal of Marketing writing style', 'Custom writing style'].map(
+              (style) => (
+                <label key={style} className="flex items-center">
+                  <input
+                    type="radio"
+                    name="writingStyle"
+                    value={style}
+                    className="form-radio text-red-500"
+                    onChange={(e) => setSelectedStyle(e.target.value)}
+                    checked={selectedStyle === style}
+                  />
+                  <span className="ml-3 text-gray-700">{style}</span>
+                </label>
+              )
+            )}
+          </div>
+        </section>
+
+        {/* Selected Writing Style */}
+        <section className="mb-8">
+          <div className="bg-blue-50 border-l-4 border-blue-500 text-blue-700 p-4 rounded-lg">
+            You selected the <strong>{selectedStyle}</strong>.
+          </div>
+        </section>
+
+        {/* Form Fields */}
+        <section>
+          <h2 className="text-lg font-semibold mb-4">Answer Following Queries</h2>
+          <form className="space-y-6" onSubmit={handleSubmit}>
+            {[
+              { name: 'mainQuery', label: 'Please enter your main query / research question' },
+              { name: 'background', label: 'Please enter the background of your research' },
+              { name: 'significance', label: 'Please enter the significance of your research' },
+              { name: 'proposedHypothesis', label: 'Please enter proposed hypothesis, if any' },
+              { name: 'underpinningTheories', label: 'Please enter the underpinning theory/theories you are using' },
+              { name: 'researchMethodology', label: 'Briefly describe your research methodology' },
+              { name: 'journalScope', label: 'Please mention the name and scope of the journal you want to publish' },
+              { name: 'context', label: 'Please mention the context of the research i.e. industry, employee orientation, workplace etc.' },
+              { name: 'instructions', label: 'Are there any special instructions you want the program to focus on?' },
+              { name: 'boundaryConditions', label: 'What are the boundary conditions/moderators in the study?' },
+              { name: 'mediators', label: 'What are the mediators in the study?' },
+              { name: 'mustIncludeArgument', label: 'Any must-include argument in the introduction?' },
+            ].map(({ name, label }) => (
+              <div key={name}>
+                <label
+                  className={`block text-sm font-medium mb-2 ${
+                    ['mainQuery', 'background', 'significance'].includes(name) && errors[name]
+                      ? 'text-red-500'
+                      : 'text-gray-700'
+                  }`}
+                >
+                  {label} {['mainQuery', 'background', 'significance'].includes(name) && '(required)'}
+                </label>
+                <textarea
+                  ref={(el) => (formRefs.current[name] = el)}
+                  name={name}
+                  value={(formData as any)[name]}
+                  onChange={handleInputChange}
+                  className={`w-full border rounded-lg shadow-sm p-3 ${
+                    errors[name] ? 'border-red-500' : 'border-gray-300 focus:border-red-500'
+                  }`}
+                  rows={3}
+                  placeholder={`Enter ${label.toLowerCase()}...`}
+                ></textarea>
+              </div>
+            ))}
+
+            <button type="submit" className="bg-red-500 text-white py-2 px-6 rounded-lg hover:bg-red-600">
+              Submit
+            </button>
+          </form>
+        </section>
       </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
     </div>
   );
 }
