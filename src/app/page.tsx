@@ -72,22 +72,22 @@ export default function Home() {
   };
 
   return (
-    <div className="flex h-screen">
+    <div className="flex">
       {/* Sidebar */}
       <aside
         className={`transition-all duration-300 bg-gray-50 border-r ${
-          sidebarOpen ? 'w-1/3' : 'w-0'
+          sidebarOpen ? 'lg:w-1/4 lg:block hidden w-0' : 'lg:w-0 w-full block lg:opacity-0'
         }`}
-        style={{ position: 'sticky', top: 0, height: '100vh' }}
-      >
-        {sidebarOpen && (
-          <div className="flex flex-col h-full">
+        style={{ top: 0 }}
+      ><div style={{position: 'sticky', top: 0}}>
+        {true && (
+          <div className="flex flex-col" style={{height: '100dvh'}}>
             {/* Scrollable Content */}
-            <div className="p-8 flex-1 overflow-y-auto">
+            <div className="p-8 flex-1 overflow-y-auto mt-5" style={{height: '80dvh'}}>
               {/* Upload Existing Vector Database */}
               <div className="mb-8">
                 <h2 className="text-lg font-semibold mb-3">Upload Existing Vector Database</h2>
-                <button className="w-full border border-gray-500 text-gray-500 py-2 px-4 rounded-lg hover:bg-red-100">
+                <button className="w-full border border-blue-500 text-blue-500 py-2 px-4 rounded-lg hover:bg-blue-100">
                   Load Vector Database
                 </button>
               </div>
@@ -140,12 +140,12 @@ export default function Home() {
               </button>
             </div>
           </div>
-        )}
+        )}</div>
       </aside>
 
       {/* Toggle Arrow */}
       <div
-        className={`absolute z-10 top-4 left-4 bg-white border border-gray-300 rounded-full p-2 shadow-lg hover:shadow-xl hover:bg-gray-100 transition-all duration-300`}
+        className={`absolute flex items-center justify-center z-10 top-4 left-4 bg-white border border-gray-300 rounded-full p-2 shadow-lg hover:shadow-xl hover:bg-gray-100 transition-all duration-300`}
         style={{
           position: 'fixed',
           top: '16px',
@@ -159,13 +159,13 @@ export default function Home() {
       </div>
 
       {/* Main Content Area */}
-      <main className="flex-1 overflow-y-auto p-8">
+      <main className={`flex-1 p-8 ${sidebarOpen ? '' :'lg:block hidden'}`}>
         <h1 className="text-3xl font-bold mb-8">Introduction Writer</h1>
 
         {/* Academic Writing Style */}
         <section className="mb-8">
           <h2 className="text-lg font-semibold mb-4">Select an Academic Writing Style</h2>
-          <div className="space-y-4">
+          <div className="space-y-3">
             {['AOM writing style', 'Science Direct writing style', 'Journal of Marketing writing style', 'Custom writing style'].map(
               (style) => (
                 <label key={style} className="flex items-center">
@@ -234,7 +234,7 @@ export default function Home() {
             ))}
 
             <button type="submit" className="bg-red-500 text-white py-2 px-6 rounded-lg hover:bg-red-600">
-              Submit
+              Get Introduction
             </button>
           </form>
         </section>
