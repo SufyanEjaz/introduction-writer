@@ -10,3 +10,8 @@ export const register = async (email: string, password: string, fullName: string
   const response = await api.post('/register', { email, password, name: fullName, confirm_password });
   return response.data;
 };
+
+export const getIntroduction = async (payload: object) => {
+  const response = await api.post('/get-introduction', { payload});
+  return response.data;
+};

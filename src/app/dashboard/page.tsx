@@ -6,6 +6,7 @@ import ArrowBackIos from '@mui/icons-material/ArrowBackIos';
 import ArrowForwardIos from '@mui/icons-material/ArrowForwardIos';
 import FileUpload from '../../components/FileUpload';
 import Header from '../../components/Header';
+import { getIntroduction } from '../../services/authService';
 
 const Dashboard = () => {
   const isLoading = useAuthGuard(); // Check if the user is authenticated
@@ -63,13 +64,40 @@ const Dashboard = () => {
     return true;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // const handleSubmit = (e: React.FormEvent) => {
+  //   e.preventDefault();
+  //   if (validateForm()) {
+  //     alert('Form submitted successfully!');
+  //     console.log('Form Data:', formData);
+  //   } else {
+  //     alert('Please fill in all required fields.');
+  //   }
+  // };
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (validateForm()) {
-      alert('Form submitted successfully!');
-      console.log('Form Data:', formData);
-    } else {
+    if (!validateForm()) {
       alert('Please fill in all required fields.');
+      return;
+    }
+
+    // Combine the file data with the form data
+    const payload = {
+      ...formData,
+      selectedStyle, 
+      theoreticalFrameworkFiles,
+      relevantTheoryFiles,
+      supportingLiteratureFiles,
+    };
+
+    try {
+      const response = await getIntroduction(payload);
+      alert('Form submitted successfully!');
+      console.log('API Response:', response.data);
+    } catch (error: any) {
+      console.log('Error submitting form:', error);
+      alert(
+        error.response?.data?.message || 'An error occurred while submitting the form.'
+      );
     }
   };
 
