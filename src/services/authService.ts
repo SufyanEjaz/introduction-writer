@@ -1,5 +1,5 @@
 // API calls for authentication
-import api from '../utils/api';
+import api from '../api/api';
 
 export const login = async (email: string, password: string) => {
   const response = await api.post('/login', { email, password });
@@ -12,6 +12,6 @@ export const register = async (email: string, password: string, fullName: string
 };
 
 export const getIntroduction = async (payload: object) => {
-  const response = await api.post('/get-introduction', { payload});
+  const response = await api.post('/get-introduction', payload);
   return response.data;
 };
