@@ -12,11 +12,11 @@ const Dashboard = () => {
   const isLoading = useAuthGuard(); // Check if the user is authenticated
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [selectedStyle, setSelectedStyle] = useState('AOM writing style');
-
+  const [planContent, setPlanContent] = useState<string | null>(null);
   const [theoreticalFrameworkFiles, setTheoreticalFrameworkFiles] = useState<File[]>([]);
   const [relevantTheoryFiles, setRelevantTheoryFiles] = useState<File[]>([]);
   const [supportingLiteratureFiles, setSupportingLiteratureFiles] = useState<File[]>([]);
-
+  
   const [formData, setFormData] = useState<{ [key: string]: string }>({
     mainQuery: '',
     background: '',
@@ -67,6 +67,7 @@ const Dashboard = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) {
+      alert('Please fill in all required fields.');
       return;
     }
 
@@ -81,24 +82,26 @@ const Dashboard = () => {
 
     try {
       const response = await getIntroduction(payload);
-      alert('Form submitted successfully!');
-      console.log('API Response:', response.data);
+
+      // Extract `plan` content and store it
+      const planContentInResponse = response?.intro_outline?.plan || null;
+      setPlanContent(planContentInResponse);
     } catch (error: any) {
-      console.log('Error submitting form:', error);
       alert(
         error.response?.data?.message || 'An error occurred while submitting the form.'
       );
     }
   };
 
-  if (isLoading) {
-    return null; // Prevent rendering until user authentication is verified
-  }
+  if (isLoading) return null; // Prevent rendering until user authentication is verified
 
   return (
     <div className="flex flex-col min-h-screen">
+      {/* Header Section */}
       <Header />
+
       <div className="flex flex-1">
+        {/* Sidebar Section */}
         <Sidebar
           sidebarOpen={sidebarOpen}
           theoreticalFrameworkFiles={theoreticalFrameworkFiles}
@@ -108,7 +111,14 @@ const Dashboard = () => {
           supportingLiteratureFiles={supportingLiteratureFiles}
           setSupportingLiteratureFiles={setSupportingLiteratureFiles}
         />
-        <ToggleArrow sidebarOpen={sidebarOpen} toggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
+
+        {/* Sidebar Toggle Arrow */}
+        <ToggleArrow
+          sidebarOpen={sidebarOpen}
+          toggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+        />
+
+        {/* Main Content Section */}
         <MainContent
           sidebarOpen={sidebarOpen}
           selectedStyle={selectedStyle}
@@ -119,6 +129,7 @@ const Dashboard = () => {
           handleSubmit={handleSubmit}
           errors={errors}
           formRefs={formRefs}
+          planContent={planContent} // Pass the response content to MainContent
         />
       </div>
     </div>

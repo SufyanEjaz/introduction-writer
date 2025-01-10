@@ -1,7 +1,9 @@
 'use client';
 
 import React from 'react';
+import ReactMarkdown from 'react-markdown';
 
+// Props for MainContent Component
 type MainContentProps = {
   sidebarOpen: boolean;
   selectedStyle: string;
@@ -12,6 +14,7 @@ type MainContentProps = {
   handleSubmit: (e: React.FormEvent) => void;
   errors: { [key: string]: boolean };
   formRefs: React.MutableRefObject<{ [key: string]: HTMLTextAreaElement | null }>;
+  planContent: string | null; // New prop for displaying API response
 };
 
 const MainContent: React.FC<MainContentProps> = ({
@@ -24,7 +27,12 @@ const MainContent: React.FC<MainContentProps> = ({
   handleSubmit,
   errors,
   formRefs,
+  planContent, // Prop to receive API response
 }) => {
+  const handleFeedback = (feedback: string) => {
+    alert(`You selected: ${feedback}`);
+  };
+
   return (
     <main className={`flex-1 p-8 ${sidebarOpen ? '' : 'lg:block hidden'}`}>
       <h1 className="text-3xl font-bold mb-8">Introduction Writer</h1>
@@ -102,6 +110,35 @@ const MainContent: React.FC<MainContentProps> = ({
           </button>
         </form>
       </section>
+
+      {/* Render plan content in a card below the form */}
+      {planContent && (
+        <section className="mt-8">
+          <div className="p-6 bg-white shadow-lg rounded-lg">
+            <h2 className="text-xl font-bold mb-4">Generated Output</h2>
+            <ReactMarkdown className="prose prose-red">{planContent}</ReactMarkdown>
+
+            {/* Feedback Buttons */}
+            <div className="mt-6">
+              <p className="text-lg font-medium mb-4">Are you happy with this response or need modifications?</p>
+              <div className="flex space-x-4">
+                <button
+                  onClick={() => handleFeedback('Yes')}
+                  className="border border-green-500 text-green-500 px-4 py-2 rounded-lg hover:bg-green-200"
+                >
+                  Yes
+                </button>
+                <button
+                  onClick={() => handleFeedback('No')}
+                  className="border border-red-500 text-red-500 px-4 py-2 rounded-lg hover:bg-red-200"
+                >
+                  No
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
     </main>
   );
 };
