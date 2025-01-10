@@ -33,7 +33,8 @@ const Dashboard = () => {
   });
 
   const [errors, setErrors] = useState<{ [key: string]: boolean }>({});
-
+  const [loading, setLoading] = useState(false); // Loader state
+  const contentRef = useRef<HTMLDivElement>(null); // Ref to focus on content
   const formRefs = useRef<{ [key: string]: HTMLTextAreaElement | null }>({});
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -86,6 +87,11 @@ const Dashboard = () => {
       // Extract `plan` content and store it
       const planContentInResponse = response?.intro_outline?.plan || null;
       setPlanContent(planContentInResponse);
+
+      // Scroll to the rendered content
+      if (planContentInResponse && contentRef.current) {
+        contentRef.current.scrollIntoView({ behavior: 'smooth' });
+      }
     } catch (error: any) {
       alert(
         error.response?.data?.message || 'An error occurred while submitting the form.'
@@ -130,6 +136,8 @@ const Dashboard = () => {
           errors={errors}
           formRefs={formRefs}
           planContent={planContent} // Pass the response content to MainContent
+          loading={loading}
+          contentRef={contentRef} // Pass content ref
         />
       </div>
     </div>

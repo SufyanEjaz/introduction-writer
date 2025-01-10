@@ -1,7 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
+import { getIntroduction } from '../services/authService';
+import { FORM_FIELDS } from '../config/formFields';
 
 // Props for MainContent Component
 type MainContentProps = {
@@ -15,6 +17,8 @@ type MainContentProps = {
   errors: { [key: string]: boolean };
   formRefs: React.MutableRefObject<{ [key: string]: HTMLTextAreaElement | null }>;
   planContent: string | null; // New prop for displaying API response
+  loading: boolean  // State to show a loading spinner
+  contentRef: React.MutableRefObject<HTMLDivElement | null>; // Ref to scroll into the generated content
 };
 
 const MainContent: React.FC<MainContentProps> = ({
@@ -27,10 +31,46 @@ const MainContent: React.FC<MainContentProps> = ({
   handleSubmit,
   errors,
   formRefs,
-  planContent, // Prop to receive API response
+  planContent,
+  loading,
+  contentRef
 }) => {
-  const handleFeedback = (feedback: string) => {
-    alert(`You selected: ${feedback}`);
+  const [showModificationField, setShowModificationField] = useState(false);
+  const [modificationField, setModificationField] = useState('');
+  const [modificationResponses, setModificationResponses] = useState<string[]>([]);
+
+  const handleFeedback = async (feedback: string) => {
+    if (feedback === 'Yes') {
+      try {
+        const response = await getIntroduction({ user_response: 'Yes' });
+        alert('Thank you for your feedback!');
+        console.log('API Response:', response);
+      } catch (error) {
+        console.error('Error submitting feedback:', error);
+        alert('An error occurred while submitting your feedback.');
+      }
+    } else {
+      setShowModificationField(true);
+    }
+  };
+
+  const handleModificationSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!modificationField.trim()) {
+      alert('Please provide details about the changes you want to make.');
+      return;
+    }
+
+    try {
+      const response = await getIntroduction({ changes_recommended: modificationField });
+      setModificationResponses((prev) => [...prev, response?.data || '']);
+      setModificationField(''); // Clear the input field
+      alert('Your suggestions have been submitted.');
+      console.log('Modification Response:', response);
+    } catch (error) {
+      console.error('Error submitting modifications:', error);
+      alert('An error occurred while submitting your modifications.');
+    }
   };
 
   return (
@@ -67,29 +107,14 @@ const MainContent: React.FC<MainContentProps> = ({
       <section>
         <h2 className="text-lg font-semibold mb-4">Answer Following Queries</h2>
         <form className="space-y-6" onSubmit={handleSubmit}>
-          {[
-            { name: 'mainQuery', label: 'Please enter your main query / research question' },
-            { name: 'background', label: 'Please enter the background of your research' },
-            { name: 'significance', label: 'Please enter the significance of your research' },
-            { name: 'proposedHypothesis', label: 'Please enter proposed hypothesis, if any' },
-            { name: 'underpinningTheories', label: 'Please enter the underpinning theory/theories you are using' },
-            { name: 'researchMethodology', label: 'Briefly describe your research methodology' },
-            { name: 'journalScope', label: 'Please mention the name and scope of the journal you want to publish' },
-            { name: 'context', label: 'Please mention the context of the research i.e. industry, employee orientation, workplace etc.' },
-            { name: 'instructions', label: 'Are there any special instructions you want the program to focus on?' },
-            { name: 'boundaryConditions', label: 'What are the boundary conditions/moderators in the study?' },
-            { name: 'mediators', label: 'What are the mediators in the study?' },
-            { name: 'mustIncludeArgument', label: 'Any must-include argument in the introduction?' },
-          ].map(({ name, label }) => (
+          {FORM_FIELDS.map(({ name, label, required }) => (
             <div key={name}>
               <label
                 className={`block text-sm font-medium mb-2 ${
-                  ['mainQuery', 'background', 'significance'].includes(name) && errors[name]
-                    ? 'text-red-500'
-                    : 'text-gray-700'
+                  required && errors[name] ? 'text-red-500' : 'text-gray-700'
                 }`}
               >
-                {label} {['mainQuery', 'background', 'significance'].includes(name) && '(required)'}
+                {label} {required && '(required)'}
               </label>
               <textarea
                 ref={(el) => (formRefs.current[name] = el)}
@@ -105,38 +130,71 @@ const MainContent: React.FC<MainContentProps> = ({
             </div>
           ))}
 
-          <button type="submit" className="bg-red-500 text-white py-2 px-6 rounded-lg hover:bg-red-600">
-            Get Introduction
+          <button 
+            type="submit" 
+            className="bg-red-500 text-white py-2 px-6 rounded-lg hover:bg-red-600"
+            disabled={loading}
+           >
+            {loading ? 'Loading...' : 'Get Introduction'}
           </button>
         </form>
       </section>
 
       {/* Render plan content in a card below the form */}
       {planContent && (
-        <section className="mt-8">
+        <section ref={contentRef} className="mt-8">
           <div className="p-6 bg-white shadow-lg rounded-lg">
             <h2 className="text-xl font-bold mb-4">Generated Output</h2>
             <ReactMarkdown className="prose prose-red">{planContent}</ReactMarkdown>
 
-            {/* Feedback Buttons */}
+            {/* Feedback Section */}
             <div className="mt-6">
               <p className="text-lg font-medium mb-4">Are you happy with this response or need modifications?</p>
               <div className="flex space-x-4">
                 <button
                   onClick={() => handleFeedback('Yes')}
-                  className="border border-green-500 text-green-500 px-4 py-2 rounded-lg hover:bg-green-200"
+                  className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600"
                 >
                   Yes
                 </button>
                 <button
                   onClick={() => handleFeedback('No')}
-                  className="border border-red-500 text-red-500 px-4 py-2 rounded-lg hover:bg-red-200"
+                  className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600"
                 >
                   No
                 </button>
               </div>
             </div>
           </div>
+
+          {/* Modification Input Section */}
+          {showModificationField && (
+            <div className="mt-6 p-6 bg-gray-50 border rounded-lg">
+              <form onSubmit={handleModificationSubmit}>
+                <label className="block text-lg font-medium mb-2">
+                  What changes do you want to make in the outline? Please mention here:
+                </label>
+                <textarea
+                  value={modificationField}
+                  onChange={(e) => setModificationField(e.target.value)}
+                  className="w-full border rounded-lg shadow-sm p-3 mb-4"
+                  rows={4}
+                  placeholder="Enter your suggestions..."
+                ></textarea>
+                <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">
+                  Submit Changes
+                </button>
+              </form>
+
+              {/* Render all responses */}
+              {modificationResponses.map((response, index) => (
+                <div key={index} className="mt-4 p-4 bg-white shadow rounded-lg">
+                  <h3 className="text-lg font-semibold mb-2">Updated Response {index + 1}</h3>
+                  <ReactMarkdown className="prose prose-blue">{response}</ReactMarkdown>
+                </div>
+              ))}
+            </div>
+          )}
         </section>
       )}
     </main>
