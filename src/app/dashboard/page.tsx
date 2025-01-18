@@ -67,10 +67,8 @@ const Dashboard = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validateForm()) {
-      alert('Please fill in all required fields.');
-      return;
-    }
+    if (!validateForm()) return;
+    setLoading(true);
 
     // Combine the file data with the form data
     const payload = {
@@ -85,14 +83,17 @@ const Dashboard = () => {
       const response = await getIntroduction(payload);
 
       // Extract `plan` content and store it
-      const planContentInResponse = response?.intro_outline?.plan || null;
+      const planContentInResponse = response?.plan || null;
       setPlanContent(planContentInResponse);
-
-      // Scroll to the rendered content
-      if (planContentInResponse && contentRef.current) {
-        contentRef.current.scrollIntoView({ behavior: 'smooth' });
+      setLoading(false);
+      if(planContentInResponse){
+        window.scrollTo({
+          top: document.documentElement.scrollHeight, // Scroll to the bottom of the page
+          behavior: 'smooth',
+        });
       }
     } catch (error: any) {
+      setLoading(false);
       alert(
         error.response?.data?.message || 'An error occurred while submitting the form.'
       );

@@ -1,8 +1,7 @@
 'use client';
 
 import React from 'react';
-import ArrowBackIos from '@mui/icons-material/ArrowBackIos';
-import ArrowForwardIos from '@mui/icons-material/ArrowForwardIos';
+import { TbArrowAutofitRight, TbArrowAutofitLeft } from "react-icons/tb";
 
 type ToggleArrowProps = {
   sidebarOpen: boolean;
@@ -21,7 +20,7 @@ const ToggleArrow: React.FC<ToggleArrowProps> = ({ sidebarOpen, toggleSidebar })
       }}
     >
       <button onClick={toggleSidebar}>
-        {sidebarOpen ? <ArrowBackIos fontSize="medium" /> : <ArrowForwardIos fontSize="medium" />}
+        {sidebarOpen ? <TbArrowAutofitLeft fontSize="medium" /> : <TbArrowAutofitRight fontSize="medium" />}
       </button>
     </div>
   );

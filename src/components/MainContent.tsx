@@ -1,9 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { getIntroduction } from '../services/authService';
 import { FORM_FIELDS } from '../config/formFields';
+import LoadingButton from './LoadingButton';
+import { BsArrowDownShort } from "react-icons/bs";
 
 // Props for MainContent Component
 type MainContentProps = {
@@ -35,47 +37,96 @@ const MainContent: React.FC<MainContentProps> = ({
   loading,
   contentRef
 }) => {
+  const modificationFieldRef = useRef<HTMLTextAreaElement | null>(null);
   const [showModificationField, setShowModificationField] = useState(false);
   const [modificationField, setModificationField] = useState('');
-  const [modificationResponses, setModificationResponses] = useState<string[]>([]);
+  const [modificationResponses, setModificationResponses] = useState<string | null>(null);
+  const [modificationError, setModificationError] = useState(false);
+  const [showArrow, setShowArrow] = useState(false); // State to control arrow visibility
 
+  // Function to handle scroll
+  const handleScroll = () => {
+    const totalHeight = document.documentElement.scrollHeight; // Total page height
+    const viewportHeight = window.innerHeight; // Viewport height
+    const currentScrollPosition = window.scrollY + viewportHeight;
+
+    // Show arrow if not at the bottom, hide if at the bottom
+    setShowArrow(currentScrollPosition < totalHeight - 10);
+  };
+
+  // Scroll to the bottom of the content
+  const scrollToBottom = () => {
+    window.scrollTo({
+      top: document.documentElement.scrollHeight, // Scroll to the bottom of the page
+      behavior: 'smooth',
+    });
+  };
+
+  // Attach and detach scroll listener
+  useEffect(() => {
+    const scrollListener = () => handleScroll();
+    window.addEventListener('scroll', scrollListener);
+
+    return () => {
+      window.removeEventListener('scroll', scrollListener);
+    };
+  }, []);
+
+  // Recheck the arrow visibility when content is appended (planContent changes)
+  useEffect(() => {
+    if (planContent || showModificationField || modificationResponses) {
+      scrollToBottom();
+    }
+    // handleScroll();
+  }, [planContent, showModificationField, modificationResponses]);
+
+  const [yesLoading, setYesLoading] = useState(false);
+  const [noLoading, setNoLoading] = useState(false);
   const handleFeedback = async (feedback: string) => {
     if (feedback === 'Yes') {
+      setYesLoading(true);
       try {
         const response = await getIntroduction({ user_response: 'Yes' });
-        alert('Thank you for your feedback!');
-        console.log('API Response:', response);
       } catch (error) {
         console.error('Error submitting feedback:', error);
-        alert('An error occurred while submitting your feedback.');
+      } finally {
+        setYesLoading(false);
       }
     } else {
+      setNoLoading(true);
       setShowModificationField(true);
+      setNoLoading(false);
     }
   };
 
+  const [submitChangesLoading, setSubmitChangesLoading] = useState(false);
   const handleModificationSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!modificationField.trim()) {
-      alert('Please provide details about the changes you want to make.');
+      setModificationError(true); // Show error styles
+      modificationFieldRef.current?.focus(); // Focus the field
       return;
     }
 
+    setSubmitChangesLoading(true);
     try {
-      const response = await getIntroduction({ changes_recommended: modificationField });
-      setModificationResponses((prev) => [...prev, response?.data || '']);
+      const response = await getIntroduction({ user_response: 'No', changes_recommended: modificationField });
+      // setModificationResponses((prev) => [...prev, response?.data || '']);
+      const finalDraft = response?.plan || null;
+      setModificationResponses(finalDraft);
       setModificationField(''); // Clear the input field
-      alert('Your suggestions have been submitted.');
-      console.log('Modification Response:', response);
+      setModificationError(false); // Clear error styles
     } catch (error) {
       console.error('Error submitting modifications:', error);
       alert('An error occurred while submitting your modifications.');
+    } finally {
+      setSubmitChangesLoading(false);
     }
   };
 
   return (
     <main className={`flex-1 p-8 ${sidebarOpen ? '' : 'lg:block hidden'}`}>
-      <h1 className="text-3xl font-bold mb-8">Introduction Writer</h1>
+      <h1 className="text-3xl font-bold mb-4 text-center">Introduction Writer</h1>
 
       <section className="mb-8">
         <h2 className="text-lg font-semibold mb-4">Select an Academic Writing Style</h2>
@@ -99,20 +150,19 @@ const MainContent: React.FC<MainContentProps> = ({
       </section>
 
       <section className="mb-8">
-        <div className="bg-blue-50 border-l-4 border-blue-500 text-blue-700 p-4 rounded-lg">
+        <div className="bg-blue-50 border-l-4 border-blue-500 text-blue-700 p-4">
           You selected the <strong>{selectedStyle}</strong>.
         </div>
       </section>
 
-      <section>
+      <section ref={contentRef}>
         <h2 className="text-lg font-semibold mb-4">Answer Following Queries</h2>
         <form className="space-y-6" onSubmit={handleSubmit}>
           {FORM_FIELDS.map(({ name, label, required }) => (
             <div key={name}>
               <label
-                className={`block text-sm font-medium mb-2 ${
-                  required && errors[name] ? 'text-red-500' : 'text-gray-700'
-                }`}
+                className={`block text-sm font-medium mb-2 ${required && errors[name] ? 'text-red-500' : 'text-gray-700'
+                  }`}
               >
                 {label} {required && '(required)'}
               </label>
@@ -121,22 +171,20 @@ const MainContent: React.FC<MainContentProps> = ({
                 name={name}
                 value={(formData as any)[name]}
                 onChange={handleInputChange}
-                className={`w-full border rounded-lg shadow-sm p-3 ${
-                  errors[name] ? 'border-red-500' : 'border-gray-300 focus:border-red-500'
-                }`}
+                className={`w-full border rounded-lg shadow-sm p-3 ${errors[name] ? 'border-red-500' : 'border-gray-300 focus:border-red-500'
+                  }`}
                 rows={3}
                 placeholder={`Enter ${label.toLowerCase()}...`}
               ></textarea>
             </div>
           ))}
 
-          <button 
-            type="submit" 
-            className="bg-red-500 text-white py-2 px-6 rounded-lg hover:bg-red-600"
-            disabled={loading}
-           >
-            {loading ? 'Loading...' : 'Get Introduction'}
-          </button>
+          <LoadingButton
+            type="submit"
+            loading={loading}
+          >
+            Get Introduction
+          </LoadingButton>
         </form>
       </section>
 
@@ -151,51 +199,80 @@ const MainContent: React.FC<MainContentProps> = ({
             <div className="mt-6">
               <p className="text-lg font-medium mb-4">Are you happy with this response or need modifications?</p>
               <div className="flex space-x-4">
-                <button
+                <LoadingButton
                   onClick={() => handleFeedback('Yes')}
+                  loading={yesLoading}
                   className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600"
                 >
                   Yes
-                </button>
-                <button
+                </LoadingButton>
+                <LoadingButton
                   onClick={() => handleFeedback('No')}
+                  loading={noLoading}
                   className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600"
                 >
                   No
-                </button>
+                </LoadingButton>
               </div>
             </div>
           </div>
-
-          {/* Modification Input Section */}
-          {showModificationField && (
-            <div className="mt-6 p-6 bg-gray-50 border rounded-lg">
-              <form onSubmit={handleModificationSubmit}>
-                <label className="block text-lg font-medium mb-2">
-                  What changes do you want to make in the outline? Please mention here:
-                </label>
-                <textarea
-                  value={modificationField}
-                  onChange={(e) => setModificationField(e.target.value)}
-                  className="w-full border rounded-lg shadow-sm p-3 mb-4"
-                  rows={4}
-                  placeholder="Enter your suggestions..."
-                ></textarea>
-                <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">
-                  Submit Changes
-                </button>
-              </form>
-
-              {/* Render all responses */}
-              {modificationResponses.map((response, index) => (
-                <div key={index} className="mt-4 p-4 bg-white shadow rounded-lg">
-                  <h3 className="text-lg font-semibold mb-2">Updated Response {index + 1}</h3>
-                  <ReactMarkdown className="prose prose-blue">{response}</ReactMarkdown>
-                </div>
-              ))}
-            </div>
-          )}
         </section>
+      )}
+
+      {/* Modification Input Section */}
+      {showModificationField && (
+        <section ref={contentRef} className="mt-8">
+          <div className="mt-6 p-6 bg-gray-50 border rounded-lg">
+            <form onSubmit={handleModificationSubmit}>
+              <label
+                className={`block text-sm font-medium mb-2 ${modificationError ? 'text-red-500' : 'text-gray-700'
+                  }`}
+              >
+                What changes do you want to make in the outline? Please mention here:
+              </label>
+              <textarea
+                ref={modificationFieldRef}
+                value={modificationField}
+                onChange={(e) => {
+                  setModificationField(e.target.value);
+                  setModificationError(false);
+                }}
+                className={`w-full border rounded-lg shadow-sm p-3 mb-4 ${modificationError ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                rows={4}
+                placeholder="Enter your suggestions..."
+              ></textarea>
+              <LoadingButton
+                type="submit"
+                loading={submitChangesLoading}
+                className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
+              >
+                Submit Changes
+              </LoadingButton>
+            </form>
+          </div>
+        </section>
+      )}
+
+
+      {/* Render all responses */}
+      {modificationResponses && (
+        <section ref={contentRef} className="mt-8">
+          <div className="p-6 bg-white shadow-lg rounded-lg">
+            <h3 className="text-lg font-semibold mb-2">Final introduction draft</h3>
+            <ReactMarkdown className="prose prose-blue">{modificationResponses}</ReactMarkdown>
+          </div>
+        </section>
+      )}
+
+      {/* Scroll to Content Button */}
+      {showArrow && (
+        <div
+          className="cursor-pointer fixed z-10 rounded-full bg-white bg-clip-padding border text-token-text-secondary border-token-border-light right-1/2 translate-x-1/2 bg-token-main-surface-primary w-8 h-8 flex items-center justify-center bottom-5"
+          onClick={scrollToBottom}
+        >
+          <BsArrowDownShort size={30} className="text-gray-600" />
+        </div>
       )}
     </main>
   );

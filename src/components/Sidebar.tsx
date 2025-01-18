@@ -32,7 +32,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       <div style={{ position: 'sticky', top: 0 }}>
         <div className="flex flex-col" style={{ height: '100dvh' }}>
           {/* Scrollable Content */}
-          <div className="p-8 flex-1 overflow-y-auto mt-5" style={{ height: '80dvh' }}>
+          <div className="p-8 flex-1 overflow-y-auto" style={{ height: '80dvh' }}>
             {/* Upload Existing Vector Database */}
             <div className="mb-8">
               <h2 className="text-lg font-semibold mb-3">Upload Existing Vector Database</h2>
@@ -87,7 +87,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           {/* Footer */}
           <div className="p-4 border-t bg-gray-100">
             <h2 className="text-lg font-semibold mb-3">Generate and Save Embeddings</h2>
-            <button className="w-full border border-red-500 text-red-500 py-2 px-4 rounded-lg hover:bg-red-100">
+            <button className="w-full border border-blue-500 text-blue-500 py-2 px-4 rounded-lg hover:bg-blue-100">
               Get Embeddings
             </button>
           </div>

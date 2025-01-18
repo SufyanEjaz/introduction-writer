@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { logout } from '../utils/auth';
 import { useRouter } from 'next/navigation';
 
@@ -11,7 +11,7 @@ const Header: React.FC = () => {
   };
 
   return (
-    <header className="bg-white shadow p-4 flex justify-between items-center sticky top-0">
+    <header className="bg-white shadow p-4 flex justify-between items-center sticky top-0 z-10">
       <h1 className="text-xl font-bold text-center flex-1">Dashboard</h1>
       <button
         onClick={handleLogout}
