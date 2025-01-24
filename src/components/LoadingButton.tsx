@@ -1,13 +1,13 @@
 import React from 'react';
-import { TbLoader3 } from "react-icons/tb";
+import { TbLoader3 } from 'react-icons/tb';
 
 type LoadingButtonProps = {
-  onClick?: () => void; // For non-form buttons
-  type?: 'button' | 'submit'; // Button type
-  loading: boolean; // Loading state
-  children: React.ReactNode; // Button text or elements
-  className?: string; // Additional styles
-  disabled?: boolean; // Additional disabled state
+  onClick?: () => void;
+  type?: 'button' | 'submit' | 'reset';
+  loading: boolean;
+  children: React.ReactNode;
+  className?: string;
+  disabled?: boolean;
 };
 
 const LoadingButton: React.FC<LoadingButtonProps> = ({
@@ -22,12 +22,11 @@ const LoadingButton: React.FC<LoadingButtonProps> = ({
     <button
       onClick={onClick}
       type={type}
-      className={`flex items-center justify-center bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
+      className={`flex items-center justify-center bg-blue-500 text-white py-2 px-4 rounded-lg 
+                  hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
       disabled={disabled || loading}
     >
-      {loading && (
-        <TbLoader3 className='loader mr-2'/>
-      )}
+      {loading && <TbLoader3 className="loader mr-2 animate-spin" />}
       {children}
     </button>
   );

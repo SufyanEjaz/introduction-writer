@@ -1,38 +1,95 @@
+'use client';
+
+import { getIntroduction } from '@/services/authService';
 import React, { useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 
 type FileUploadProps = {
-  files: File[]; // List of uploaded files
-  setFiles: React.Dispatch<React.SetStateAction<File[]>>; // Function to update files
-  onDrop: (acceptedFiles: File[]) => void; // Callback for handling uploaded files
-  accept?: { [key: string]: string[] }; // Accepted file types
-  maxSize: number; // Maximum file size in bytes
+  files: File[];
+  setFiles: React.Dispatch<React.SetStateAction<File[]>>;
+  onDrop: (acceptedFiles: File[]) => void;
+  accept?: { [key: string]: string[] }; // Accept map for dropzone
+  maxSize: number; // Max file size in bytes
 };
 
-const FileUpload: React.FC<FileUploadProps> = ({ files, setFiles, onDrop, accept, maxSize }) => {
-  const [error, setError] = useState<string | null>(null); // State for error messages
-  const [showAllFiles, setShowAllFiles] = useState(false); // State to toggle showing all files
+const FileUpload: React.FC<FileUploadProps> = ({
+  files,
+  setFiles,
+  onDrop,
+  accept,
+  maxSize,
+}) => {
+  const [error, setError] = useState<string | null>(null);
+  const [showAllFiles, setShowAllFiles] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState<{ isVisible: boolean; fileName: string | null }>({
+    isVisible: false,
+    fileName: null,
+  });
+
+  // Function to validate file name
+  const isFileNameValid = (fileName: string): boolean => {
+    const invalidCharactersRegex = /[,'"`\\/]/; // Matches commas, apostrophes, inverted commas, and slashes
+    return !invalidCharactersRegex.test(fileName);
+  };
+
+  // Function to check if a file name is already uploaded
+  const isFileUnique = (fileName: string): boolean => {
+    return !files.some((file) => file.name === fileName);
+  };
 
   const handleDrop = (acceptedFiles: File[]) => {
-    const validFiles = acceptedFiles.filter((file) => {
-      if (file.size > maxSize) {
-        setError(`File ${file.name} exceeds the size limit of ${Math.floor(maxSize / (1024 * 1024))}MB.`);
-        return false;
+    const validFiles: File[] = [];
+    acceptedFiles.filter((file) => {
+      if (!isFileUnique(file.name)) {
+        setError(`File ${file.name} has already been uploaded.`);
+      } else if (file.size > maxSize) {
+        setError(
+          `File ${file.name} exceeds the size limit of ${Math.floor(
+            maxSize / (1024 * 1024)
+          )}MB.`
+        );
+      } else if (!isFileNameValid(file.name)) {
+        setError(
+          `File ${file.name} contains invalid characters (commas, apostrophes, inverted commas, or slashes).`
+        );
+      } else {
+        validFiles.push(file);
       }
-      return true;
     });
 
     if (validFiles.length > 0) {
       const updatedFiles = [...files, ...validFiles];
-      setFiles(updatedFiles); // Update the files state
-      onDrop(validFiles); // Trigger the parent callback
-      setError(null); // Clear error if valid files are uploaded
+      setFiles(updatedFiles);
+      onDrop(validFiles);
+      setError(null); // Clear any previous error if we got valid files
     }
   };
 
-  const removeFile = (fileName: string) => {
-    const updatedFiles = files.filter((file) => file.name !== fileName);
-    setFiles(updatedFiles); // Remove specific file
+  const confirmRemoveFile = (fileName: string) => {
+    setConfirmDialog({ isVisible: true, fileName });
+  };
+
+  const removeFile = async () => {
+    if (!confirmDialog.fileName) return;
+
+    try {
+      // Build the payload
+      const payload = new FormData();
+      payload.append('file', confirmDialog.fileName);
+
+      // Make the API call
+      const response = await getIntroduction(payload);
+      const deleted = response?.plan || null;
+      if(deleted){
+        const updatedFiles = files.filter((file) => file.name !== confirmDialog.fileName);
+        setFiles(updatedFiles);
+        setError(null);
+      }
+    } catch (error) {
+      setError('Failed to remove the file. Please try again.');
+    } finally {
+      setConfirmDialog({ isVisible: false, fileName: null }); // Close dialog
+    }
   };
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -40,9 +97,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ files, setFiles, onDrop, accept
     accept,
   });
 
-  const toggleFileView = () => {
-    setShowAllFiles(!showAllFiles);
-  };
+  const toggleFileView = () => setShowAllFiles((prev) => !prev);
 
   return (
     <div className="space-y-3">
@@ -83,7 +138,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ files, setFiles, onDrop, accept
               >
                 <span className="truncate w-3/4">{file.name}</span>
                 <button
-                  onClick={() => removeFile(file.name)}
+                  onClick={() => confirmRemoveFile(file.name)}
                   className="text-red-500 hover:underline text-right"
                 >
                   Remove
@@ -99,6 +154,33 @@ const FileUpload: React.FC<FileUploadProps> = ({ files, setFiles, onDrop, accept
               {showAllFiles ? 'View Less' : 'Load More'}
             </button>
           )}
+        </div>
+      )}
+
+      {/* Confirmation Dialog */}
+      {confirmDialog.isVisible && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg text-center">
+            <h2 className="text-lg font-semibold mb-4">Confirm File Removal</h2>
+            <p className="text-sm text-gray-600 mb-6">
+              Are you sure you want to remove the file{' '}
+              <span className="font-bold">{confirmDialog.fileName}</span>? This action cannot be undone.
+            </p>
+            <div className="flex justify-center space-x-4">
+              <button
+                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+                onClick={removeFile}
+              >
+                Confirm
+              </button>
+              <button
+                className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400"
+                onClick={() => setConfirmDialog({ isVisible: false, fileName: null })}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

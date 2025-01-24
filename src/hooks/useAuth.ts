@@ -2,19 +2,22 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { isAuthenticated } from '../utils/auth';
+import { isAuthenticated } from '@/services/authService'; // or '@/utils/auth'
 
 export const useAuthGuard = () => {
-  const [isLoading, setIsLoading] = useState(true); // Add loading state
+  const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
     if (!isAuthenticated()) {
-      router.push('/auth/login'); // Redirect to login if not authenticated
+      // If not authenticated, redirect to login
+      router.push('/auth/login');
     } else {
-      setIsLoading(false); // User is authenticated, allow the page to load
+      // Otherwise, set loading to false, so the page can render
+      setIsLoading(false);
     }
   }, [router]);
 
+  // Return if still loading (so page won't render)
   return isLoading;
 };

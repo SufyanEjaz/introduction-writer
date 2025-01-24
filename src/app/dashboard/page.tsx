@@ -1,111 +1,58 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
-import { useAuthGuard } from '../../hooks/useAuth';
-import Header from '../../components/Header';
-import Sidebar from '../../components/Sidebar';
-import ToggleArrow from '../../components/ToggleArrow';
-import MainContent from '../../components/MainContent';
-import { getIntroduction } from '../../services/authService';
+import React, { useState } from 'react';
+import { useAuthGuard } from '@/hooks/useAuth';
+import Header from '@/components/Header';
+import Sidebar from '@/components/Sidebar';
+import MainContent from '@/components/MainContent';
+import useIntroductionForm from '@/hooks/useIntroductionForm';
 
-const Dashboard = () => {
-  const isLoading = useAuthGuard(); // Check if the user is authenticated
+const DashboardPage: React.FC = () => {
+  // 1. Check if user is authenticated
+  const isAuthLoading = useAuthGuard();
+
+  // 2. Local UI state for toggling sidebar
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [selectedStyle, setSelectedStyle] = useState('AOM writing style');
-  const [planContent, setPlanContent] = useState<string | null>(null);
+
+  // 3. File states for each category
   const [theoreticalFrameworkFiles, setTheoreticalFrameworkFiles] = useState<File[]>([]);
   const [relevantTheoryFiles, setRelevantTheoryFiles] = useState<File[]>([]);
   const [supportingLiteratureFiles, setSupportingLiteratureFiles] = useState<File[]>([]);
-  
-  const [formData, setFormData] = useState<{ [key: string]: string }>({
-    mainQuery: '',
-    background: '',
-    significance: '',
-    proposedHypothesis: '',
-    underpinningTheories: '',
-    researchMethodology: '',
-    journalScope: '',
-    context: '',
-    instructions: '',
-    boundaryConditions: '',
-    mediators: '',
-    mustIncludeArgument: '',
-  });
 
-  const [errors, setErrors] = useState<{ [key: string]: boolean }>({});
-  const [loading, setLoading] = useState(false); // Loader state
-  const contentRef = useRef<HTMLDivElement>(null); // Ref to focus on content
-  const formRefs = useRef<{ [key: string]: HTMLTextAreaElement | null }>({});
+  // 4. Use the custom hook for introduction form logic
+  const {
+    selectedStyle,
+    setSelectedStyle,
+    formData,
+    errors,
+    loading,
+    yesLoading,
+    noLoading,
+    submitChangesLoading,
+    planContent,
+    modificationResponses,
+    showModificationField,
+    modificationField,
+    modificationError,
+    handleInputChange,
+    handleSubmit,
+    handleFeedback,
+    handleModificationSubmit,
+    setModificationField,
+  } = useIntroductionForm();
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    setErrors((prev) => ({ ...prev, [name]: false }));
-  };
-
-  const validateForm = () => {
-    const newErrors: { [key: string]: boolean } = {};
-    const requiredFields = ['mainQuery', 'background', 'significance'];
-
-    requiredFields.forEach((field) => {
-      if (!formData[field as keyof typeof formData]?.trim()) {
-        newErrors[field] = true;
-      }
-    });
-
-    setErrors(newErrors);
-    if (Object.keys(newErrors).length > 0) {
-      const firstErrorKey = requiredFields.find((field) => newErrors[field]);
-      if (firstErrorKey) {
-        formRefs.current[firstErrorKey]?.focus();
-      }
-      return false;
-    }
-
-    return true;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validateForm()) return;
-    setLoading(true);
-
-    // Combine the file data with the form data
-    const payload = {
-      ...formData,
-      selectedStyle,
-      theoreticalFrameworkFiles,
-      relevantTheoryFiles,
-      supportingLiteratureFiles,
-    };
-
-    try {
-      const response = await getIntroduction(payload);
-
-      // Extract `plan` content and store it
-      const planContentInResponse = response?.plan || null;
-      setPlanContent(planContentInResponse);
-      setLoading(false);
-      if(planContentInResponse){
-        window.scrollTo({
-          top: document.documentElement.scrollHeight, // Scroll to the bottom of the page
-          behavior: 'smooth',
-        });
-      }
-    } catch (error: any) {
-      setLoading(false);
-      alert(
-        error.response?.data?.message || 'An error occurred while submitting the form.'
-      );
-    }
-  };
-
-  if (isLoading) return null; // Prevent rendering until user authentication is verified
+  // If auth is still being checked or user is not authenticated:
+  if (isAuthLoading) {
+    return null; // or a spinner
+  }
 
   return (
     <div className="flex flex-col min-h-screen">
       {/* Header Section */}
-      <Header />
+      <Header
+        sidebarOpen={sidebarOpen}
+        toggleSidebar={() => setSidebarOpen((prev) => !prev)}
+      />
 
       <div className="flex flex-1">
         {/* Sidebar Section */}
@@ -119,30 +66,37 @@ const Dashboard = () => {
           setSupportingLiteratureFiles={setSupportingLiteratureFiles}
         />
 
-        {/* Sidebar Toggle Arrow */}
-        <ToggleArrow
-          sidebarOpen={sidebarOpen}
-          toggleSidebar={() => setSidebarOpen(!sidebarOpen)}
-        />
-
         {/* Main Content Section */}
         <MainContent
           sidebarOpen={sidebarOpen}
           selectedStyle={selectedStyle}
           setSelectedStyle={setSelectedStyle}
           formData={formData}
-          setFormData={setFormData}
           handleInputChange={handleInputChange}
-          handleSubmit={handleSubmit}
           errors={errors}
-          formRefs={formRefs}
-          planContent={planContent} // Pass the response content to MainContent
           loading={loading}
-          contentRef={contentRef} // Pass content ref
+          yesLoading={yesLoading}
+          noLoading={noLoading}
+          submitChangesLoading={submitChangesLoading}
+          planContent={planContent}
+          modificationResponses={modificationResponses}
+          showModificationField={showModificationField}
+          modificationField={modificationField}
+          modificationError={modificationError}
+          setModificationField={setModificationField}
+          handleFeedback={handleFeedback}
+          handleModificationSubmit={handleModificationSubmit}
+          handleSubmit={(e) =>
+            handleSubmit(e, {
+              theoreticalFrameworkFiles,
+              relevantTheoryFiles,
+              supportingLiteratureFiles,
+            })
+          }
         />
       </div>
     </div>
   );
 };
 
-export default Dashboard;
+export default DashboardPage;

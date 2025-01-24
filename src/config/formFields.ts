@@ -1,5 +1,10 @@
 export const FORM_FIELDS = [
     {
+      name: 'customStyleDetails',
+      label: 'Please paste your preferred introduction writing style / sample here',
+      required: true,
+    },
+    {
       name: 'mainQuery',
       label: 'Please enter your main query / research question',
       required: true,
