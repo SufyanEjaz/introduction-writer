@@ -1,6 +1,7 @@
-'use client';
+"use client";
 
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { useRedirectIfAuthenticated } from './../hooks/useRedirectIfAuthenticated';
 
 export default function Home() {
@@ -14,9 +15,10 @@ export default function Home() {
   return (
     <div className="flex h-screen">
       <div className="flex-1 bg-yellow-50">
-        <img
+        <Image
           src="/intro.gif"
           alt="Animated GIF"
+          fill
           className="w-full h-full object-cover"
         />
       </div>

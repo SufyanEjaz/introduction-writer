@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'https://dummyjson.com/auth',
+  baseURL: 'https://a9ca-161-73-255-39.ngrok-free.app',
   headers: {
     'Content-Type': 'application/json',
   },

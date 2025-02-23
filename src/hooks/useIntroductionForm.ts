@@ -152,12 +152,13 @@ const useIntroductionForm = () => {
           behavior: 'smooth',
         });
       }
-    } catch (error: any) {
+    } catch (err: unknown) {
       setLoading(false);
-      console.error(
-        error?.response?.data?.message ||
-          'An error occurred while submitting the form.'
-      );
+      if (err instanceof Error) {
+        console.error(err.message);
+      } else {
+        console.error('An error occurred while submitting the form.');
+      }
     }
   };
 

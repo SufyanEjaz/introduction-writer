@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import axios from 'axios';
 import { login } from '../../../services/authService';
 import { useRedirectIfAuthenticated } from '../../../hooks/useRedirectIfAuthenticated';
 
@@ -21,19 +22,29 @@ const Login = () => {
     const customError = 'An error occurred while logging in. Please use valid credentials.';
     
     try {
-      const data = await login(email, password);
+      // const data = await login(email, password);
+      const data = await login();
       localStorage.setItem('token', data.token);
       router.push('/dashboard');
-    } catch (error: any) {
-      if (error.response && error.response.data && error.response.data.errors) {
-        const apiErrors = error.response.data.errors;
-        setErrors({
-          email: apiErrors.email ? apiErrors.email[0] : '',
-          password: apiErrors.password ? apiErrors.password[0] : '',
-          apiError: error.response.data.message || customError,
-        });
+    } catch (error: unknown) {
+      // Use Axios error guard if using Axios
+      if (axios.isAxiosError(error)) {
+        if (error.response && error.response.data && error.response.data.errors) {
+          const apiErrors = error.response.data.errors;
+          setErrors({
+            email: apiErrors.email ? apiErrors.email[0] : '',
+            password: apiErrors.password ? apiErrors.password[0] : '',
+            apiError: error.response.data.message || customError,
+          });
+        } else {
+          setErrors({ apiError: error.response?.data?.message || customError });
+        }
+      } else if (error instanceof Error) {
+        // Generic Error fallback
+        setErrors({ apiError: error.message });
       } else {
-        setErrors({ apiError: error.response.data.message || customError });
+        // Fallback for unknown error type
+        setErrors({ apiError: customError });
       }
     }
   };

@@ -1,7 +1,7 @@
 'use client';
 
 import { getIntroduction } from '@/services/authService';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 
 type FileUploadProps = {
@@ -21,7 +21,10 @@ const FileUpload: React.FC<FileUploadProps> = ({
 }) => {
   const [error, setError] = useState<string | null>(null);
   const [showAllFiles, setShowAllFiles] = useState(false);
-  const [confirmDialog, setConfirmDialog] = useState<{ isVisible: boolean; fileName: string | null }>({
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isVisible: boolean;
+    fileName: string | null;
+  }>({
     isVisible: false,
     fileName: null,
   });
@@ -39,7 +42,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
 
   const handleDrop = (acceptedFiles: File[]) => {
     const validFiles: File[] = [];
-    acceptedFiles.filter((file) => {
+    acceptedFiles.forEach((file) => {
       if (!isFileUnique(file.name)) {
         setError(`File ${file.name} has already been uploaded.`);
       } else if (file.size > maxSize) {
@@ -80,15 +83,18 @@ const FileUpload: React.FC<FileUploadProps> = ({
       // Make the API call
       const response = await getIntroduction(payload);
       const deleted = response?.plan || null;
-      if(deleted){
-        const updatedFiles = files.filter((file) => file.name !== confirmDialog.fileName);
+      if (deleted) {
+        const updatedFiles = files.filter(
+          (file) => file.name !== confirmDialog.fileName
+        );
         setFiles(updatedFiles);
         setError(null);
       }
-    } catch (error) {
+    } catch (err) {
+      console.log(err);
       setError('Failed to remove the file. Please try again.');
     } finally {
-      setConfirmDialog({ isVisible: false, fileName: null }); // Close dialog
+      setConfirmDialog({ isVisible: false, fileName: null });
     }
   };
 
@@ -105,7 +111,9 @@ const FileUpload: React.FC<FileUploadProps> = ({
       <div
         {...getRootProps()}
         className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer ${
-          isDragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-400 hover:border-blue-500'
+          isDragActive
+            ? 'border-blue-500 bg-blue-50'
+            : 'border-gray-400 hover:border-blue-500'
         }`}
       >
         <input {...getInputProps()} />
@@ -175,7 +183,9 @@ const FileUpload: React.FC<FileUploadProps> = ({
               </button>
               <button
                 className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400"
-                onClick={() => setConfirmDialog({ isVisible: false, fileName: null })}
+                onClick={() =>
+                  setConfirmDialog({ isVisible: false, fileName: null })
+                }
               >
                 Cancel
               </button>
