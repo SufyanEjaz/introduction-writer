@@ -51,12 +51,12 @@ type MainContentProps = {
   handleModificationSubmit: (e: React.FormEvent) => void;
 };
 
-const WRITING_STYLES = [
-  // 'AOM writing style',
-  // 'Science Direct writing style',
-  // 'Journal of Marketing writing style',
-  'Custom writing style',
-];
+// const WRITING_STYLES = [
+//   // 'AOM writing style',
+//   // 'Science Direct writing style',
+//   // 'Journal of Marketing writing style',
+//   'Custom writing style',
+// ];
 
 const MainContent: React.FC<MainContentProps> = ({
   // Layout
