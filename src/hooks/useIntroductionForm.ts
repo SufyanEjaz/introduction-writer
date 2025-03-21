@@ -25,17 +25,21 @@ const useIntroductionForm = () => {
   const [formData, setFormData] = useState<FormDataType>({
     customStyleDetails: '',
     mainQuery: '',
+    centralPhenomenon: '',
+    context: '',
+    independentVariable: '',
+    boundaryConditions: '',
+    mediators: '',
     background: '',
     significance: '',
     proposedHypothesis: '',
     underpinningTheories: '',
     researchMethodology: '',
     journalScope: '',
-    context: '',
-    instructions: '',
-    boundaryConditions: '',
-    mediators: '',
     mustIncludeArgument: '',
+    instructions: '',
+    user_id: '45',
+    user_email: 'abc@abc.com',
   });
 
   // 3. Manage errors and loading
@@ -64,7 +68,7 @@ const useIntroductionForm = () => {
   // ---- VALIDATION ----
   const validateForm = (includeCustomStyle: boolean): boolean => {
     const newErrors: Errors = {};
-    const requiredFields = ['mainQuery', 'background', 'significance'];
+    const requiredFields = ['mainQuery', 'centralPhenomenon', 'context', 'independentVariable','significance', 'proposedHypothesis'];
 
     // Include `customStyleDetails` if "Custom writing style" is selected
     if (includeCustomStyle) {
@@ -113,7 +117,7 @@ const useIntroductionForm = () => {
         if (key === 'customStyleDetails' && !includeCustomStyle) return;
         payload.append(key, value);
       });
-
+      console.log(payload)
       // Append the selected style
       payload.append('selectedStyle', selectedStyle);
 
@@ -140,6 +144,7 @@ const useIntroductionForm = () => {
 
       // 2. Send request with FormData
       const response = await getIntroduction(payload);
+      console.log(response);
       const planContentInResponse = response?.plan || null;
       setPlanContent(planContentInResponse);
 
@@ -170,7 +175,10 @@ const useIntroductionForm = () => {
     if (feedback === 'Yes') {
       setYesLoading(true);
       try {
-        await getIntroduction({ user_response: 'Yes' });
+        const payload = new FormData();
+        payload.append('user_response', 'Yes');
+        // await getIntroduction(payload);
+        alert("Thankyou very much for using our service.")
         // Add any additional logic if needed
       } catch (error) {
         console.error('Error submitting feedback:', error);
@@ -197,10 +205,10 @@ const useIntroductionForm = () => {
     setSubmitChangesLoading(true);
     try {
       // If you need to send files again, build FormData here as well
-      const response = await getIntroduction({
-        user_response: 'No',
-        changes_recommended: modificationField,
-      });
+      const payload = new FormData();
+      payload.append('user_response', 'No');
+      payload.append('changes_recommended', modificationField);
+      const response = await getIntroduction(payload);
       const finalDraft = response?.plan || null;
       setModificationResponses(finalDraft);
 

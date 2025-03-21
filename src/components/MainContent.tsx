@@ -52,9 +52,9 @@ type MainContentProps = {
 };
 
 const WRITING_STYLES = [
-  'AOM writing style',
-  'Science Direct writing style',
-  'Journal of Marketing writing style',
+  // 'AOM writing style',
+  // 'Science Direct writing style',
+  // 'Journal of Marketing writing style',
   'Custom writing style',
 ];
 
@@ -126,33 +126,32 @@ const MainContent: React.FC<MainContentProps> = ({
     <main className={`flex-1 p-8 ${sidebarOpen ? '' : 'lg:block hidden'}`}>
       <h1 className="text-3xl font-bold mb-8">Introduction Writer</h1>
 
-      {/* Writing Style Selection */}
+      {/* Writing Style Selection - Changed to Checkbox */}
       <section className="mb-8">
-        <h2 className="text-lg font-semibold mb-4">Select an Academic Writing Style</h2>
+        <h2 className="text-lg font-semibold mb-4">Select Custom Writing Style (Optional)</h2>
         <div className="space-y-3">
-          {WRITING_STYLES.map((style) => (
-            <label key={style} className="flex items-center">
-              <input
-                type="radio"
-                name="writingStyle"
-                value={style}
-                className="form-radio text-red-500"
-                onChange={(e) => setSelectedStyle(e.target.value)}
-                checked={selectedStyle === style}
-              />
-              <span className="ml-3 text-gray-700">{style}</span>
-            </label>
-          ))}
+          <label className="flex items-center">
+            <input
+              type="checkbox"
+              className="form-checkbox text-red-500"
+              checked={selectedStyle === 'Custom writing style'}
+              onChange={(e) => {
+                setSelectedStyle(e.target.checked ? 'Custom writing style' : '');
+              }}
+            />
+            <span className="ml-3 text-gray-700">Custom writing style</span>
+          </label>
         </div>
       </section>
 
-      <section className="mb-8">
-        <div className="bg-blue-50 border-l-4 border-blue-500 text-blue-700 p-4">
-          You selected the <strong>{selectedStyle}</strong> {selectedStyle === 'Custom writing style' && (
-            <span> - Please paste your writing style sample below</span>
-          )}.
-        </div>
-      </section>
+
+      {selectedStyle === 'Custom writing style' && (
+        <section className="mb-8">
+          <div className="bg-blue-50 border-l-4 border-blue-500 text-blue-700 p-4">
+            You selected the <strong>{selectedStyle}</strong> - Please paste your writing style sample below.
+          </div>
+        </section>
+      )}
 
       {/* Main Form */}
       <section>
